@@ -1,0 +1,35 @@
+name: 每8个小时更新一次reference
+on:
+  schedule:
+    - cron: '21 */8 * * *' # 定时任务
+  workflow_dispatch:       # 手动运行
+
+env: # 设置环境变量
+  TZ: Asia/Shanghai # 时区（设置时区可使页面中的`最近更新时间`使用时区时间）
+
+jobs:
+  build: # 自定义名称
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🚜 拉取最新代码
+        uses: actions/checkout@v3
+        with:
+          ref: 'main'
+          repository: 'jaywcjlove/reference'
+
+      - name: ♻️ 编译静态文件
+        run: |
+          echo -e 'REF_URL=https://refs.xxx.net/\nREF_LABEL=网站首页' > .env
+          npm install
+          npm run build
+
+      - name: 🚁 部署到服务器
+        uses: wlixcc/SFTP-Deploy-Action@v1.0
+        with:
+          username: 'root'   #ssh user name
+          port: '22' # 远程服务器ssh端口，默认22
+          server: '18.162.41.204' # 远程服务器IP
+          ssh_private_key: '-----BEGIN RSA PRIVATE KEY-----MIIEpAIBAAKCAQEAjMQ4kgx3CLSWLZn2AtNjVPSFNGv5udJaAqwlcs+xKOt67bbGmdRu+xPuPWeTJ+uT11oE6ofNlOoGghbYNCzkscbxUgvAWHKi8UqbwC2o21Swb2U6bhY2TIi/8v9yn11BqfX48IHkiufwOTunJ0nRqWmOOjz5R2EQiDbKiUWViOwwPpFQWE4IOB6QRT+ibkbPEy/KQcnX9OA1jLDwZa1hS4N6ik32RsRSywC8ZrRm2hNlqKQiZ2Am4NRcb9LU4bqdFhVv9l51VXL+PEcrW88j8jk/4eacbcl4IUAgyfKzkXF12NUHR0DD10qzbEHb4M2EQzeX166sUX+cnLq98JLDCwIDAQABAoIBAGWmKGemoqphpXTGkfTWawtlC2+gbRO3h5IYd25h9j9jVECmVOGumnmqmcYzrfsMzZScB6LIcDcRi6OTFYsPxBFwZMDnhX0ZQvrU8oWjMyU3EbVPNxNZ7Nn1gg7aUg4sjIdL/PjIA54fAMSDhCAF2WXpuG/rqeLWf9atIjJgUiwttqJNdTuJIwHVdlPspVofLCyKiOnESrng7InyZaEiRSNPnIt9KJaW3qzrbJB2gNZdEpxwlElHKQybuODwd1Su7esW96iinFNrHtqcdIs8JS60mS3IYj6POOmBxRNTtrOzDYcP7VU9b7Xh0qCrjW956NwgQ6XsYqxy58x2AlYtR+ECgYEA03Oo/n1isVaVEu525m327W0FjO47wzi6K+vlTVtQ+cpCNsug+IRK+7sQRUS8b3ubB9CyxfXtJp3L49jGTPA/O/Rfeq6hYvRGeqwBmDA+7rDGRzkYDNdc946tbiymhRLb/+uKlE6Yyny/+0nHLJLLxrTk1WR44mg+id+HMxI7sTsCgYEAqmxA1hlPMat9OyRc+6Tj6d9358JB4EYNaWhezU6CWCqFnPuzaWtBdaMpPWYT+t6f9UhLivFzEzItunezGI1TUGqhUTRRPa/mYSlFCHmJP9DMqk67W3wKJr10gTLzKhE9TstvsjTSHnR+SSRSp5XY4wbVUngOh4nmRmhfQykUGHECgYEArSdidPvybKwtKTKTtUDJW0XSrMSNteDnO35R6NXlapfBPyPi7n9O8/MMcNzHvjcnDfBN5SPtDplbVHq4cFqwPYVxBoKob+L/MAdYyup/LnEd/Ub4tdNKMwLobHct6X03IMweUDJIllAv2jRhYNPZASAy37gF8clRpQ+hpCXDMe8CgYEAnJQLWeo1BciurYjyWU4dDMKBkxC6n8kdB2yaNX1dao3e5uWm6ENgCCoZeMzxrHugcaazqXu/I7Llqr3Rccxe8LKXdllgDxIu07QsNeYcQOKhOBRQNXSYixFkGlRqb4sZTezBufSn3M1hPeg+fLTDaYrcsgGWL9d2F9hLNhRm3zECgYA/SI0wQCesHBeFoig6H9X4hGarnHtfNxA5tqpvRJ5a4yr3xQJuOl+e1VQeV96UTu20sXId3x6mgOwFKFaSIRqXE/YACk+ULXdE9F0q19BU1EVf8Mb1LCstXqp7d1PwOAtSAtd9nzRirWRX+NT9XgZMWu3X8jn0g2QJPev6IcxDDQ==-----END RSA PRIVATE KEY-----' # 认证服务器秘钥对的私钥
+          local_path: './dist/*'  # 对应我们项目打包后的静态文件路径
+          remote_path: '/www/wwwroot/ref.lumirant.top' # 服务器上的路径
+          delete_remote_files: true
